@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: IoT/IndividualData.vue</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: IoT/IndividualData.vue</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;!-- @format -->
+&lt;!-- eslint-disable -->
+&lt;template>
+  &lt;div class="seperate-data">
+    &lt;!-- server error start -->
+    &lt;section v-if="error === true" id="server-error" class="d-flex align-items-center flex-wrap  pb-0">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col cols="12" md="12">
+            &lt;v-alert class="py-5 mt-5" type="error"> {{ error_message }}&lt;/v-alert>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+    &lt;!-- server error end -->
+
+    &lt;div id="temp-table" class="block d-flex align-items-center flex-wrap">
+      &lt;v-container fluid>
+        &lt;v-row class="pt-10">
+          &lt;v-col cols="12" md="12">
+            &lt;h3 class="heading my-2 pt-10">Data tabellen&lt;/h3>
+          &lt;/v-col>
+        &lt;/v-row>
+        &lt;v-row>
+          &lt;v-col md12 class="text-center">
+            &lt;v-card class="elevation-5">
+              &lt;v-card-title>
+                Temperatuur data
+                &lt;v-spacer>&lt;/v-spacer>
+                &lt;v-text-field v-model="temp_search" append-icon="mdn-search" rounded label="Zoeken" outlined hide-details>&lt;/v-text-field>
+              &lt;/v-card-title>
+              &lt;v-data-table
+                :headers="temp_header"
+                :items="response_temp_data"
+                :search="temp_search"
+                :items-per-page="15"
+                :loading="temp_loading"
+                loading-text="Loading... Please wait"
+              >&lt;/v-data-table>
+            &lt;/v-card>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/div>
+
+    &lt;div id="light-table" class="block d-flex align-items-center flex-wrap">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col md12 class="text-center">
+            &lt;v-card class="elevation-5">
+              &lt;v-card-title>
+                Licht data
+                &lt;v-spacer>&lt;/v-spacer>
+                &lt;v-text-field v-model="light_search" append-icon="mdn-search" rounded label="Zoeken" outlined hide-details>&lt;/v-text-field>
+              &lt;/v-card-title>
+              &lt;v-data-table
+                :headers="light_header"
+                :items="response_light_data"
+                :search="light_search"
+                :items-per-page="15"
+                :loading="light_loading"
+                loading-text="Loading... Please wait"
+              >&lt;/v-data-table>
+            &lt;/v-card>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/div>
+  &lt;/div>
+&lt;/template>
+
+&lt;script>
+/* eslint-disable */
+import axios from "axios";
+const baseURL = "http://www.jensvanhulst.tech:3000";
+
+/**
+ * @vue-data {Array&lt;JSON>} [response_temp_data=empty] - Receives the values from the request
+ * @vue-data {Array&lt;JSON>} [response_light_data=empty] - Receives the values from the request
+ *
+ * @vue-data {Boolean} [temp_loading=false] - Displays the table's loading animation when table is loading the data
+ * @vue-data {Boolean} [light_loading=false] - Displays the table's loading animation when table is loading the data
+ *
+ * @vue-data {String} [temp_search=empty] - Filters the temperatures table depending on the input value
+ * @vue-data {String} [light_search=empty] - Filters the light table depending on the input value
+ *
+ * @vue-data {Array&lt;Object>} [temp_headers] - Configuration for the temperature table headers
+ * @vue-data {Array&lt;Object>} [light_headers] - Configuration for the light overview table headers
+ */
+export default {
+  data() {
+    return {
+      response_temp_data: [],
+      response_light_data: [],
+
+      // search variables for the search functionality in the tables
+      temp_search: "",
+      light_search: "",
+
+      //Booleans to toggle loading animation on the tables
+      temp_loading: false,
+      light_loading: false,
+
+      error: false,
+      error_message: "",
+
+      // table formatation and data
+      temp_header: [
+        {
+          text: "Indentificatienummer (ID)",
+          align: "left",
+          sortable: false,
+          value: "ID"
+        },
+        { text: "Sensorwaarde", value: "Value", align: "center" },
+        { text: "Timestamp", value: "Timestamp", align: "center" }
+      ],
+
+      light_header: [
+        {
+          text: "Indentificatienummer (ID)",
+          align: "left",
+          sortable: false,
+          value: "ID"
+        },
+        { text: "Sensorwaarde", value: "Value", align: "center" },
+        { text: "Timestamp", value: "Timestamp", align: "center" }
+      ]
+    };
+  },
+
+  mounted() {
+    this.fetchTempData();
+    this.fetchLightData();
+  },
+
+  methods: {
+    /**
+     * Fetches the temperature data from the API
+     */
+    fetchTempData() {
+      this.temp_loading = true;
+      axios
+        .get(baseURL + "/get", {
+          params: {
+            table: "SensorData",
+            id: "SENSOR_001_TEMP"
+          }
+        })
+        .then((response) => {
+          this.response_temp_data = response.data;
+        })
+        .catch((error) => {
+          this.error = true;
+          this.error_message = error;
+        })
+        .finally(() => {
+          this.temp_loading = false;
+        });
+    },
+
+    /**
+     * Fetches the light data from the API
+     */
+    fetchLightData() {
+      this.light_loading = true;
+      axios
+        .get(baseURL + "/get", {
+          params: {
+            table: "SensorOverview",
+            id: "SENSOR_002_LIGHT"
+          }
+        })
+        .then((response) => {
+          this.response_light_data = response.data;
+        })
+        .catch((error) => {
+          this.error = true;
+          this.error_message = error;
+        })
+        .finally(() => {
+          this.light_loading = false;
+        });
+    }
+  }
+};
+&lt;/script>
+
+&lt;style lang="scss" scoped>
+.block {
+  padding: 0px 100px;
+}
+&lt;/style>
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Dashboard.html">Dashboard</a></li><li><a href="module-IndividualData.html">IndividualData</a></li><li><a href="module-Iot.html">Iot</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-Register.html">Register</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseURL">baseURL</a></li><li><a href="global.html#baseUrl">baseUrl</a></li><li><a href="global.html#filteredLightArray">filteredLightArray</a></li><li><a href="global.html#filteredTempArray">filteredTempArray</a></li><li><a href="global.html#light">light</a></li><li><a href="global.html#lightDates">lightDates</a></li><li><a href="global.html#temp">temp</a></li><li><a href="global.html#tempDates">tempDates</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Dec 16 2019 10:44:00 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

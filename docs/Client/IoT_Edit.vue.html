@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: IoT/Edit.vue</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: IoT/Edit.vue</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;!-- @format -->
+&lt;!-- eslint-disable   -->
+&lt;template>
+  &lt;div class="add">
+    &lt;v-overlay :value="overlay" z-index="1000">
+      &lt;v-progress-circular indeterminate size="64" width="10" color="rgb(29, 51, 69)">&lt;/v-progress-circular>
+    &lt;/v-overlay>
+
+    &lt;v-snackbar v-model="succes_snackbar" color="success" :timeout="timeout" top>
+      {{ succes_text }}
+      &lt;v-btn dark text @click="succes_snackbar = false">
+        Close
+      &lt;/v-btn>
+    &lt;/v-snackbar>
+
+    &lt;v-snackbar v-model="failure_snackbar" color="error" :timeout="timeout" top>
+      {{ failure_text }}
+      &lt;v-btn dark text @click="failure_snackbar = false">
+        Close
+      &lt;/v-btn>
+    &lt;/v-snackbar>
+
+    &lt;section id="add">
+      &lt;v-container fluid>
+        &lt;v-row class="pt-10">
+          &lt;v-col cols="12">
+            &lt;h2 class="text-center">Pas data in de database aan:&lt;/h2>
+          &lt;/v-col>
+        &lt;/v-row>
+        &lt;v-row justify="center">
+          &lt;div class="form-container">
+            &lt;v-form ref="updateForm">
+              &lt;v-container fluid>
+                &lt;v-row justify="center">
+                  &lt;v-col cols="7">
+                    &lt;!-- Select Type -->
+                    &lt;v-select v-model="option_1" :items="update_types" label="Wat wilt u aanpassen ?" outlined>&lt;/v-select>
+                  &lt;/v-col>
+
+                  &lt;v-col cols="7" v-show="option_1 === 'sensor'">
+                    &lt;v-text-field v-model="option_2" :rules="[rules.required]" label="Geef het oude ID op" outlined>&lt;/v-text-field>
+                  &lt;/v-col>
+
+                  &lt;v-col cols="7" v-show="option_1 === 'sensor'">
+                    &lt;v-text-field v-model="option_3" :rules="[rules.required]" label="Geef het nieuwe ID op" outlined>&lt;/v-text-field>
+                  &lt;/v-col>
+
+                  &lt;v-col cols="7" v-show="option_1 === 'data'">
+                    &lt;v-select v-model="option_4" :rules="[rules.required]" :items="update_sensor" label="Selecteer een sensor" outlined>&lt;/v-select>
+                  &lt;/v-col>
+
+                  &lt;v-col cols="7" v-show="option_1 === 'data'">
+                    &lt;v-text-field v-model="option_5" :rules="[rules.required]" label="Vul de timestamp in" outlined>&lt;/v-text-field>
+                  &lt;/v-col>
+
+                  &lt;v-col cols="7" v-show="option_1 === 'data'">
+                    &lt;v-text-field v-model="option_6" :rules="[rules.required]" type="number" label="Vul de nieuwe waarde in" outlined>&lt;/v-text-field>
+                  &lt;/v-col>
+
+                  &lt;v-col cols="7" align="center">
+                    &lt;v-btn v-on:click="updateData()" class="warning" dark rounded outlined> Update waardes &lt;/v-btn>
+                  &lt;/v-col>
+                &lt;/v-row>
+              &lt;/v-container>
+            &lt;/v-form>
+          &lt;/div>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+  &lt;/div>
+&lt;/template>
+
+&lt;script>
+import axios from "axios";
+
+/**
+ * @vue-data {Boolean} [overlay=false] - Triggers the loading overlay
+ * @vue-data {Number} [timeout_5000=5000] - Sets the alert message to a timeout value (ms)
+ *
+ * @vue-data {Boolean} [succes_snackbar=false] - Triggers the succes snackbar
+ * @vue-data {String} [succes_text="Data succesvol gedelete"] - Sets the succes message
+ *
+ * @vue-data {Boolean} [failure_snackbar=false] - Failure the succes snackbar
+ * @vue-data {String} [failure_text="Oeps er is iets misgelopen..."] - Sets the failure message
+ *
+ * @vue-data {Array&lt;String>} [update_types="value"] - Selects what the user wants to edit
+ * @vue-data {Array&lt;String>} [update_sensor="value"] - Selects the sensor id
+ *
+ * @vue-data {String} [option_1=null] - Asks user what they want to edit
+ * @vue-data {String} [option_2=null] - Asks user to input the old ID of the sensor
+ * @vue-data {String} [option_3=null] - Asks user to input a new ID for the sensor
+ * @vue-data {String} [option_4=null] - Asks user to select a sensor
+ * @vue-data {Timestamp} [option_5=null] - Asks user to input the new timestamp
+ * @vue-data {Number} [option_6=null] - Asks user to input a new value for the sensor
+ *
+ * @vue-data {Object} [rules] - Applies validation to the form
+ */
+
+const baseUrl = "http://www.jensvanhulst.tech:3000";
+
+export default {
+  /* eslint-disable */
+  data() {
+    return {
+      //loading overlay
+      overlay: false,
+      timeout: 5000,
+
+      //snackbar config
+      succes_snackbar: false,
+      succes_text: "Data succesvol gewijzigd",
+
+      //snackbar config
+      failure_snackbar: false,
+      failure_text: "Oeps er is iets misgelopen probeer later opnieuw",
+
+      //properties for the form
+      update_types: ["sensor", "data"],
+      update_sensor: ["SENSOR_001_TEMP", "SENSOR_002_LIGHT"],
+
+      option_1: null,
+      option_2: null,
+      option_3: null,
+      option_4: null,
+      option_5: null,
+      option_6: null,
+
+      //validate form
+      rules: {
+        required: (value) => !!value || "Dit veld is vereist."
+      }
+    };
+  },
+
+  methods: {
+    /**
+     * Edits the data depending on what the user selected / inputted
+     */
+    updateData() {
+      this.overlay = true;
+      axios
+        .put(baseUrl + "/update", null, {
+          params: {
+            type: this.option_1,
+            oldid: this.option_2,
+            newid: this.option_3,
+            id: this.option_4,
+            time: this.option_5,
+            val: this.option_6
+          }
+        })
+        .then((response) => {
+          this.overlay = false;
+          if (response.status === 200) {
+            this.succes_snackbar = true;
+          } else if (response.status === 500) {
+            this.failure_snackbar = true;
+          }
+        })
+        .catch((error) => {
+          this.failure_snackbar = true;
+        })
+        .finally(() => {
+          this.$refs.updateForm.reset();
+          this.$refs.updateForm.resetValidation();
+        });
+    }
+  }
+};
+&lt;/script>
+
+&lt;style>&lt;/style>
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Dashboard.html">Dashboard</a></li><li><a href="module-IndividualData.html">IndividualData</a></li><li><a href="module-Iot.html">Iot</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-Register.html">Register</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseURL">baseURL</a></li><li><a href="global.html#baseUrl">baseUrl</a></li><li><a href="global.html#filteredLightArray">filteredLightArray</a></li><li><a href="global.html#filteredTempArray">filteredTempArray</a></li><li><a href="global.html#light">light</a></li><li><a href="global.html#lightDates">lightDates</a></li><li><a href="global.html#temp">temp</a></li><li><a href="global.html#tempDates">tempDates</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Dec 16 2019 10:44:00 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

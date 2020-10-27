@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: IoT/Delete.vue</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: IoT/Delete.vue</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;!-- @format -->
+&lt;!-- eslint-disable   -->
+&lt;template>
+  &lt;div class="add">
+    &lt;v-overlay :value="overlay" z-index="1000">
+      &lt;v-progress-circular indeterminate size="64" width="10" color="rgb(29, 51, 69)">&lt;/v-progress-circular>
+    &lt;/v-overlay>
+
+    &lt;v-snackbar v-model="succes_snackbar" color="success" :timeout="timeout" top>
+      {{ succes_text }}
+      &lt;v-btn dark text @click="succes_snackbar = false">
+        Close
+      &lt;/v-btn>
+    &lt;/v-snackbar>
+
+    &lt;v-snackbar v-model="failure_snackbar" color="error" :timeout="timeout" top>
+      {{ failure_text }}
+      &lt;v-btn dark text @click="failure_snackbar = false">
+        Close
+      &lt;/v-btn>
+    &lt;/v-snackbar>
+
+    &lt;section id="add">
+      &lt;v-container fluid>
+        &lt;v-row class="pt-10">
+          &lt;v-col cols="12">
+            &lt;h2 class="text-center">Verwijder data van de database :&lt;/h2>
+          &lt;/v-col>
+        &lt;/v-row>
+        &lt;v-row justify="center">
+          &lt;div class="form-container">
+            &lt;v-form ref="deleteForm">
+              &lt;v-container fluid>
+                &lt;v-row justify="center">
+                  &lt;v-col cols="7">
+                    &lt;v-select
+                      v-model="option_1"
+                      :rules="[rules.required]"
+                      :items="delete_operations"
+                      label="Wat wilt u verwijderen ?"
+                      outlined
+                    >&lt;/v-select>
+                  &lt;/v-col>
+                  &lt;v-col cols="7">
+                    &lt;v-select v-model="option_2" :rules="[rules.required]" :items="delete_table" label="Selecteer een tabel" outlined>&lt;/v-select>
+                  &lt;/v-col>
+                  &lt;v-col cols="7">
+                    &lt;v-checkbox class="pa-0 ma-0" :rules="[rules.required]" v-model="confirm" label="Ben je zeker ?">&lt;/v-checkbox>
+                  &lt;/v-col>
+                  &lt;v-col cols="7" align="center">
+                    &lt;v-btn v-on:click="deleteData()" class="error" dark rounded outlined> Delete &lt;/v-btn>
+                  &lt;/v-col>
+                &lt;/v-row>
+              &lt;/v-container>
+            &lt;/v-form>
+          &lt;/div>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+  &lt;/div>
+&lt;/template>
+
+&lt;script>
+import axios from "axios";
+
+/**
+ * @vue-data {Boolean} [overlay=false] - Triggers the loading overlay
+ * @vue-data {Number} [timeout_5000=5000] - Sets the alert message to a timeout value (ms)
+ *
+ * @vue-data {Boolean} [succes_snackbar=false] - Triggers the succes snackbar
+ * @vue-data {String} [succes_text="Data succesvol gedelete"] - Sets the succes message
+ *
+ * @vue-data {Boolean} [failure_snackbar=false] - Failure the succes snackbar
+ * @vue-data {String} [failure_text="Oeps er is iets misgelopen..."] - Sets the failure message
+ *
+ * @vue-data {Array&lt;String>} [delete_operations="value"] - Selects the table option
+ * @vue-data {Array&lt;String>} [delete_table="value"] - Selects the table the user wants to delete
+ *
+ * @vue-data {String} [option_1=null] - Asks user what they want to delete
+ * @vue-data {String} [option_2=null] - Asks user to select a table they want to clear
+ * @vue-data {Boolean} [confirm=null] - Asks for confirmation of the user
+ *
+ *
+ * @vue-data {Object} [rules] - Applies validation to the form
+ */
+
+const baseUrl = "http://www.jensvanhulst.tech:3000";
+
+export default {
+  /* eslint-disable */
+  data() {
+    return {
+      //loading overlay
+      overlay: false,
+      timeout: 5000,
+
+      //snackbar config
+      succes_snackbar: false,
+      succes_text: "Data succesvol gedelete",
+
+      //snackbar config
+      failure_snackbar: false,
+      failure_text: "Oeps er is iets misgelopen probeer later opnieuw",
+
+      //properties for the form
+      delete_operations: ["table"],
+      delete_table: ["SensorData", "SensorOverview"],
+
+      option_1: null,
+      option_2: null,
+
+      confirm: false,
+
+      //validate form
+      rules: {
+        required: (value) => !!value || "Dit veld is vereist."
+      }
+    };
+  },
+
+  methods: {
+    /**
+     * Deletes data depending on the options of the form
+     */
+    deleteData() {
+      if (this.confirm === true) {
+        this.overlay = true;
+        axios
+          .delete(baseUrl + "/delete", {
+            params: {
+              type: this.option_1,
+              table: this.option_2
+            }
+          })
+          .then((response) => {
+            this.overlay = false;
+            if (response.status === 200) {
+              this.succes_snackbar = true;
+            } else if (response.status === 500) {
+              this.failure_snackbar = true;
+            }
+          })
+          .catch((error) => {
+            this.failure_snackbar = true;
+          })
+          .finally(() => {
+            this.$refs.deleteForm.reset();
+            this.$refs.deleteForm.resetValidation();
+          });
+      } else {
+        alert("Bevestig je bewerking aub.");
+      }
+    }
+  }
+};
+&lt;/script>
+
+&lt;style>&lt;/style>
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Dashboard.html">Dashboard</a></li><li><a href="module-IndividualData.html">IndividualData</a></li><li><a href="module-Iot.html">Iot</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-Register.html">Register</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseURL">baseURL</a></li><li><a href="global.html#baseUrl">baseUrl</a></li><li><a href="global.html#filteredLightArray">filteredLightArray</a></li><li><a href="global.html#filteredTempArray">filteredTempArray</a></li><li><a href="global.html#light">light</a></li><li><a href="global.html#lightDates">lightDates</a></li><li><a href="global.html#temp">temp</a></li><li><a href="global.html#tempDates">tempDates</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Dec 16 2019 10:44:00 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

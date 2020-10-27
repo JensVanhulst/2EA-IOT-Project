@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: IoT/Dashboard.vue</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: IoT/Dashboard.vue</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;!-- @format -->
+&lt;!-- eslint-disable-->
+&lt;template>
+  &lt;div class="dashboard">
+    &lt;v-overlay :value="overlay" z-index="1000">
+      &lt;v-progress-circular indeterminate size="64" width="10" color="rgb(29, 51, 69)">&lt;/v-progress-circular>
+    &lt;/v-overlay>
+
+    &lt;v-snackbar v-model="succes_snackbar" color="success" :timeout="timeout" top>
+      {{ succes_text }}
+      &lt;v-btn dark text @click="succes_snackbar = false">
+        Close
+      &lt;/v-btn>
+    &lt;/v-snackbar>
+
+    &lt;v-snackbar v-model="failure_snackbar" color="error" :timeout="timeout" top>
+      {{ failure_text }}
+      &lt;v-btn dark text @click="failure_snackbar = false">
+        Close
+      &lt;/v-btn>
+    &lt;/v-snackbar>
+
+    &lt;!-- Last data update start -->
+    &lt;section v-if="error === false" id="last-update" class="d-flex align-items-center flex-wrap mt-10 pb-0">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col cols="12" md="12">
+            &lt;v-alert class="py-5 mt-5" type="info"> De laatste update van data : {{ update_period }} &lt;/v-alert>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+    &lt;!-- Last data update end -->
+
+    &lt;!-- server error start -->
+    &lt;section v-if="error === true" id="server-error" class="d-flex align-items-center flex-wrap  pb-0">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col cols="12" md="12">
+            &lt;v-alert class="py-5 mt-5" type="error"> {{ error_message }}&lt;/v-alert>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+    &lt;!-- server error end -->
+
+    &lt;!-- Database operations start -->
+    &lt;section v-if="isLoggedIn" id="operations" class=" pb-0 d-flex align-items-center flex-wrap pt-0">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col cols="12" md="12">
+            &lt;h3 class="heading my-2">Operations&lt;/h3>
+            &lt;p class="subheading font-italic font-weight-medium">Bewerk de data in de database met de volgende knoppen.&lt;/p>
+          &lt;/v-col>
+        &lt;/v-row>
+        &lt;v-row>
+          &lt;v-col cols="1" class="ml-0 mr-5">
+            &lt;div>
+              &lt;v-btn color="success" x-large dark @click="$router.push('/iot/add')">
+                &lt;font-awesome-icon :icon="['fas', 'plus']" />
+              &lt;/v-btn>
+            &lt;/div>
+          &lt;/v-col>
+          &lt;v-col cols="1" class="mx-5">
+            &lt;div>
+              &lt;v-btn color="warning" x-large dark @click="$router.push('/iot/edit')">
+                &lt;font-awesome-icon :icon="['fas', 'pencil-alt']" />
+              &lt;/v-btn>
+            &lt;/div>
+          &lt;/v-col>
+          &lt;v-col cols="1" class="mx-5">
+            &lt;div>
+              &lt;v-btn color="error" x-large dark @click="$router.push('/iot/delete')">
+                &lt;font-awesome-icon :icon="['fas', 'trash-alt']" />
+              &lt;/v-btn>
+            &lt;/div>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+    &lt;!-- Database operations end -->
+
+    &lt;!-- Sensor overzicht start -->
+    &lt;div id="sensor-table" class="block d-flex align-items-center flex-wrap">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col cols="12" md="12">
+            &lt;h3 class="heading my-2">Een overzicht van de data&lt;/h3>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col md12 class="text-center">
+            &lt;v-card class="elevation-5">
+              &lt;v-card-title>
+                Sensor overzicht
+                &lt;v-spacer>&lt;/v-spacer>
+                &lt;v-text-field v-model="sensor_search" append-icon="mdn-search" rounded label="Zoeken" outlined hide-details>&lt;/v-text-field>
+              &lt;/v-card-title>
+              &lt;v-data-table
+                :headers="sensor_headers"
+                :items="response_sensor"
+                :search="sensor_search"
+                :items-per-page="5"
+                :loading="sensor_loading"
+                loading-text="Loading... Please wait"
+              >
+                &lt;template v-slot:item.action="{ item }">
+                  &lt;v-icon regular @click="deleteSensor(item)">
+                    mdi-delete-outline
+                  &lt;/v-icon>
+                &lt;/template>
+              &lt;/v-data-table>
+            &lt;/v-card>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/div>
+    &lt;!-- Sensor overzicht end -->
+
+    &lt;!-- Data overzicht start -->
+    &lt;div id="data-table" class=" block d-flex align-items-center flex-wrap">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col md12 class="text-center">
+            &lt;v-card class="elevation-5">
+              &lt;v-card-title>
+                Data overzicht
+                &lt;v-spacer>&lt;/v-spacer>
+                &lt;v-text-field v-model="data_search" append-icon="mdn-search" rounded label="Zoeken" outlined hide-details>&lt;/v-text-field>
+              &lt;/v-card-title>
+              &lt;v-data-table
+                :headers="data_headers"
+                :items="response_data"
+                :search="data_search"
+                :items-per-page="15"
+                :loading="data_loading"
+                loading-text="Loading... Please wait"
+              >
+                &lt;template v-if="isLoggedIn" v-slot:item.action="{ item }">
+                  &lt;v-icon regular @click="deleteValue(item)">
+                    mdi-delete-outline
+                  &lt;/v-icon>
+                &lt;/template>
+              &lt;/v-data-table>
+            &lt;/v-card>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/div>
+    &lt;!-- Data overzicht end -->
+  &lt;/div>
+&lt;/template>
+
+&lt;script>
+import { fb } from "../../firebase";
+import axios from "axios";
+
+const baseURL = "http://www.jensvanhulst.tech:3000";
+
+/**
+ * @vue-data {Boolean} [overlay=false] - Triggers the loading overlay
+ * @vue-data {Number} [timeout_5000=5000] - Sets the alert message to a timeout value (ms)
+ *
+ * @vue-data {Boolean} [error=false] - Sets the error flag to true if there is an error
+ * @vue-data {String} [error_message=empty] - Displays the error message in an alert when there is one
+ *
+ * @vue-data {Boolean} [succes_snackbar=false] - Triggers the succes snackbar
+ * @vue-data {String} [succes_text=Data succesvol gedelete]- Sets the succes message
+ *
+ * @vue-data {Boolean} [failure_snackbar=false] Failure the succes snackbar
+ * @vue-data {String} [failure_text="Oeps..."] - Sets the failure message
+ *
+ * @vue-data {String} [update_period=null] - Displays the latest date when the data was updated
+ *
+ * @vue-data {Array&lt;JSON>} [response_data=empty] - Receives the data from the axios request
+ * @vue-data {Array&lt;JSON>} [response_sensor=empty] - Receives the sensors from the axios request
+ *
+ * @vue-data {Boolean} [isLoggedIn=false] - Sets a flag if user is logged in so we can show sections based on if someone is logged in or not
+ * @vue-data {Boolean} [currentUser=false] - Sets the currentUser to the Firebase user object
+ *
+ * @vue-data {String} [sensor_search=empty] - Filters the sensors table depending on the input value
+ * @vue-data {String} [data_search=empty] - Filters the data table depending on the input value
+ *
+ * @vue-data {Boolean} [sensor_loading=false] - Displays the table's loading animation when table is loading the data
+ * @vue-data {Boolean} [data_loading=false] - Displays the table's loading animation when table is loading the data
+ *
+ * @vue-data {Array&lt;Object>} [sensor_headers] - Configuration for the sensor overview table headers
+ * @vue-data {Array&lt;Object>} [data_headers] - Configuration for the data overview table headers
+ */
+
+export default {
+  /* eslint-disable */
+  name: "dashboard",
+  data() {
+    return {
+      //loading overlay
+      overlay: false,
+      timeout: 5000,
+
+      error: false,
+      error_message: "",
+
+      //snackbar config
+      succes_snackbar: false,
+      succes_text: "Data succesvol gedelete",
+
+      //snackbar config
+      failure_snackbar: false,
+      failure_text: "Oeps er is iets misgelopen probeer later opnieuw",
+
+      //variable to store the latest date of the data is updated
+      update_period: null,
+      response_data: [],
+      response_sensor: [],
+
+      //auth variables
+      isLoggedIn: false,
+      currentUser: false,
+
+      // search variables for the search functionality in the tables
+      sensor_search: "",
+      data_search: "",
+
+      //Booleans to toggle loading animation on the tables
+      sensor_loading: false,
+      data_loading: false,
+
+      //Latest Values
+      latestTemp: null,
+      latestLight: null,
+
+      prevTimestamp: null,
+
+      // table formatation and data
+      sensor_headers: [
+        {
+          text: "Indentificatienummer (ID)",
+          align: "left",
+          sortable: false,
+          value: "ID"
+        },
+        { text: "Brand", value: "Brand", align: "center" },
+        { text: "IP adres", value: "IP", align: "center" },
+        { text: "Sensorwaarde", value: "Value", align: "center" },
+        { text: "Timestamp", value: "Timestamp", align: "center" },
+        { text: "Bewerking", value: "action", sortable: false, align: "center" }
+      ],
+
+      data_headers: [
+        {
+          text: "Indentificatienummer (ID)",
+          align: "left",
+          sortable: false,
+          value: "ID"
+        },
+        { text: "Sensorwaarde", value: "Value", align: "center" },
+        { text: "Timestamp", value: "Timestamp", align: "center" },
+        { text: "Bewerking", value: "action", sortable: false, align: "center" }
+      ]
+    };
+  },
+
+  created() {
+    //check if user is logged in
+    if (fb.auth().currentUser) {
+      this.isLoggedIn = true;
+      this.currentUser = fb.auth().currentUser.email;
+    }
+  },
+
+  mounted() {
+    this.overlay = true;
+    this.getLatestValues();
+    this.fetchData();
+    this.fetchSensors();
+    this.getDate();
+    this.overlay = false;
+  },
+
+  methods: {
+    /**
+     * Gets The latest value from the API
+     */
+    getLatestLightValue() {
+      return axios.get(baseURL + "/get", {
+        params: {
+          id: "lkv",
+          sensor: "SENSOR_002_LIGHT"
+        }
+      });
+    },
+
+    /**
+     * Gets The latest value from the API
+     */
+    getLatestTempValue() {
+      return axios.get(baseURL + "/get", {
+        params: {
+          id: "lkv",
+          sensor: "SENSOR_001_TEMP"
+        }
+      });
+    },
+
+    getLatestValues() {
+      axios
+        .all([this.getLatestTempValue(), this.getLatestLightValue()])
+        .then(
+          axios.spread((acct, perms) => {
+            this.latestTemp = acct.data;
+            this.latestLight = perms.data;
+            if ((this.latestTemp !== null &amp;&amp; this.latestLight !== null) || this.latestTemp[0].Value !== "undefined") {
+              this.updateLatestValues();
+            }
+          })
+        )
+        .catch((error) => {});
+    },
+
+    updateLatestValues() {
+      axios
+        .all([this.updateLatestTempValue(), this.updateLatestLightValue()])
+        .then(axios.spread((acct, perms) => {}))
+        .catch((error) => {});
+    },
+
+    /**
+     * Updates The latest value from the API
+     */
+    updateLatestTempValue() {
+      return axios.put(baseURL + "/update", null, {
+        params: {
+          type: "lkv",
+          id: "SENSOR_001_TEMP",
+          val: this.latestTemp[0].Value,
+          time: this.latestTemp[0].Timestamp
+        }
+      });
+    },
+
+    /**
+     * Updates The latest value from the API
+     */
+    updateLatestLightValue() {
+      return axios.put(baseURL + "/update", null, {
+        params: {
+          type: "lkv",
+          id: "SENSOR_002_LIGHT",
+          val: this.latestLight[0].Value,
+          time: this.latestLight[0].Timestamp
+        }
+      });
+    },
+
+    /**
+     * Gets all sensor data from the API
+     */
+    fetchData() {
+      this.data_loading = true;
+      axios
+        .get(baseURL + "/get", {
+          params: {
+            table: "SensorData"
+          }
+        })
+        .then((response) => {
+          this.response_data = response.data;
+        })
+        .catch((error) => {
+          this.error = true;
+          this.error_message = error;
+        })
+        .finally(() => {
+          this.data_loading = false;
+        });
+    },
+
+    /**
+     * Gets all sensors from the API
+     */
+    fetchSensors() {
+      this.sensor_loading = true;
+      axios
+        .get(baseURL + "/get", {
+          params: {
+            table: "SensorOverview"
+          }
+        })
+        .then((response) => {
+          this.response_sensor = response.data;
+        })
+        .catch((error) => {
+          this.error = true;
+          this.error_message = error;
+        })
+        .finally(() => {
+          this.sensor_loading = false;
+        });
+    },
+
+    /**
+     * Gets a new date for the update_period
+     */
+    getDate() {
+      var date = new Date();
+      var new_date = this.formatDate(date);
+      this.update_period = new_date;
+    },
+
+    /**
+     * Formates the newly created date into YYYY/MM/DD HH:MM:SS
+     * @param {Date} date - Accepts a date object
+     * @returns {String} - Formatted date
+     */
+    formatDate(date) {
+      return (
+        date.getFullYear() +
+        "-" +
+        ("00" + (date.getMonth() + 1)).slice(-2) +
+        "-" +
+        ("00" + date.getDate()).slice(-2) +
+        " " +
+        ("00" + date.getHours()).slice(-2) +
+        ":" +
+        ("00" + date.getMinutes()).slice(-2) +
+        ":" +
+        ("00" + date.getSeconds()).slice(-2)
+      );
+    },
+
+    /**
+     * Deletes a sensor from within the table (operations)
+     * @param {Object} item - Gets in an object that contains the data from the clicked item in table
+     * @returns {void} - Void
+     */
+    deleteSensor(item) {
+      this.overlay = true;
+      axios
+        .delete(baseURL + "/delete", {
+          params: {
+            type: "sensor",
+            id: item.ID
+          }
+        })
+        .then((response) => {
+          this.overlay = false;
+          if (response.status === 200) {
+            this.succes_snackbar = true;
+          } else if (response.status === 500) {
+            this.failure_snackbar = true;
+          }
+        })
+        .catch((error) => {
+          this.failure_snackbar = true;
+        })
+        .finally(() => {
+          window.location.reload();
+        });
+    },
+
+    /**
+     * Deletes a value from within the table (operations)
+     * @param {Object} item - Gets in an object that contains the data from the clicked item in table
+     * @returns {void} - Void
+     */
+    deleteValue(item) {
+      this.overlay = true;
+      axios
+        .delete(baseURL + "/delete", {
+          params: {
+            type: "data",
+            id: item.ID,
+            val: item.Value,
+            time: item.Timestamp
+          }
+        })
+        .then((response) => {
+          this.overlay = false;
+          if (response.status === 200) {
+            this.succes_snackbar = true;
+          } else if (response.status === 500) {
+            this.failure_snackbar = true;
+          }
+        })
+        .catch((error) => {
+          this.failure_snackbar = true;
+        })
+        .finally(() => {
+          window.location.reload();
+        });
+    }
+  }
+};
+&lt;/script>
+
+&lt;style lang="scss" scoped>
+.block {
+  padding: 0 100px;
+}
+&lt;/style>
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Dashboard.html">Dashboard</a></li><li><a href="module-IndividualData.html">IndividualData</a></li><li><a href="module-Iot.html">Iot</a></li><li><a href="module-Login.html">Login</a></li><li><a href="module-Register.html">Register</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseURL">baseURL</a></li><li><a href="global.html#baseUrl">baseUrl</a></li><li><a href="global.html#filteredLightArray">filteredLightArray</a></li><li><a href="global.html#filteredTempArray">filteredTempArray</a></li><li><a href="global.html#light">light</a></li><li><a href="global.html#lightDates">lightDates</a></li><li><a href="global.html#temp">temp</a></li><li><a href="global.html#tempDates">tempDates</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Dec 16 2019 10:44:00 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

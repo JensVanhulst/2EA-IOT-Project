@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>RSS Feed Jens Vanhulst</title>
+    <link>https://www.jensvanhulst.tech</link>
+    <description>RSS Feed for latest statistics of the sensors</description>
+    </channel>
+</rss>

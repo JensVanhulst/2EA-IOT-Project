@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Graphs.vue</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Graphs.vue</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;!-- @format -->
+&lt;!-- eslint-disable-->
+&lt;template>
+  &lt;div class="graphs">
+    &lt;v-overlay :value="overlay" z-index="1000">
+      &lt;v-progress-circular indeterminate size="64" width="10" color="rgb(29, 51, 69)">&lt;/v-progress-circular>
+    &lt;/v-overlay>
+
+    &lt;!-- Last data update start -->
+    &lt;section v-show="chart != null" id="last-update" class="d-flex align-items-center flex-wrap mt-10 pb-0">
+      &lt;v-container fluid>
+        &lt;v-row class="row">
+          &lt;v-col cols="12">
+            &lt;div style="width: 100%; overflow-x: auto;">
+              &lt;div :style="{ width: 40 * 30 + 'px', height: '600px' }">
+                &lt;canvas id="myChart" height="300" width="0">&lt;/canvas>
+              &lt;/div>
+            &lt;/div>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+
+    &lt;!-- Last data update start -->
+    &lt;section id="averages" class="d-flex align-items-center flex-wrap mt-10 pb-0">
+      &lt;v-container fluid>
+        &lt;v-row>
+          &lt;v-col cols="12" md="12">
+            &lt;canvas id="barchart">&lt;/canvas>
+          &lt;/v-col>
+        &lt;/v-row>
+      &lt;/v-container>
+    &lt;/section>
+  &lt;/div>
+&lt;/template>
+
+&lt;script>
+/* eslint-disable*/
+import axios from "axios";
+var Chart = require("chart.js");
+
+/**
+ * Defines the colors that can be used in the charts
+ * @typedef {Object} chartColors
+ * @property {String} red - rgb(255, 99, 132)
+ * @property {String} orange - rgb(255, 159, 64)
+ * @property {String} yellow - rgb(255, 205, 86)
+ * @property {String} green - rgb(75, 192, 192)
+ * @property {String} blue - rgb(54, 162, 235)
+ * @property {String} purple - rgb(153, 102, 255)
+ * @property {String} grey - rgb(231,233,237)
+ */
+
+var chartColors = {
+  red: "rgb(255, 99, 132)",
+  orange: "rgb(255, 159, 64)",
+  yellow: "rgb(255, 205, 86)",
+  green: "rgb(75, 192, 192)",
+  blue: "rgb(54, 162, 235)",
+  purple: "rgb(153, 102, 255)",
+  grey: "rgb(231,233,237)"
+};
+
+/**
+ * @vue-data {Boolean} [overlay=false] - Triggers the loading overlay
+ *
+ * @vue-data {Array&lt;String>} [update_types="value"] - Selects what the user wants to edit
+ * @vue-data {Array&lt;String>} [update_sensor="value"] - Selects the sensor id
+ *
+ * @vue-data {String} [option_1=null] - Asks user what they want to edit
+ * @vue-data {String} [option_2=null] - Asks user to input the old ID of the sensor
+ * @vue-data {String} [option_3=null] - Asks user to input a new ID for the sensor
+ * @vue-data {String} [option_4=null] - Asks user to select a sensor
+ * @vue-data {Timestamp} [option_5=null] - Asks user to input the new timestamp
+ * @vue-data {Number} [option_6=null] - Asks user to input a new value for the sensor
+ *
+ * @vue-data {Object} [rules] - Applies validation to the form
+ */
+
+export default {
+  data() {
+    return {
+      //loading overlay
+      overlay: false,
+
+      chart: null,
+      temp: [],
+      light: [],
+
+      tempDates: [],
+      lightDates: Array,
+
+      //Filtered Timestamps
+      filteredTempDate: Array,
+      filteredLightDate: Array,
+
+      filteredTempArray: [],
+      filteredLightArray: [],
+      AverageTemp: Number,
+      AverageLight: Number
+    };
+  },
+
+  mounted() {
+    this.overlay = true;
+    axios
+      .get("http://localhost:3000/get", {
+        params: {
+          table: "SensorData"
+        }
+      })
+      .then((response) => {
+        this.filteredTempDate = response.data.filter(function(el) {
+          return el.ID === "SENSOR_001_TEMP";
+        });
+
+        this.tempDates = this.filteredTempDate.map((i) => {
+          return i.Timestamp;
+        });
+
+        this.filteredLightDate = response.data.filter(function(el) {
+          return el.ID === "SENSOR_002_LIGHT";
+        });
+        this.lightDates = this.filteredLightDate.map((i) => {
+          return i.Timestamp;
+        });
+
+        //Filter the array on ID and map it to a filtered id
+        this.filteredTempArray = response.data.filter(function(el) {
+          return el.ID === "SENSOR_001_TEMP";
+        });
+        this.temp = this.filteredTempArray.map((i) => {
+          return i.Value;
+        });
+
+        //filter light array
+        this.filteredLightArray = response.data.filter(function(el) {
+          return el.ID === "SENSOR_002_LIGHT";
+        });
+
+        this.light = this.filteredLightArray.map((i) => {
+          return i.Value;
+        });
+
+        var ctx = document.getElementById("myChart");
+        this.chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                type: "line",
+                label: "Temerature",
+                data: this.temp,
+                borderColor: chartColors.red,
+                backgroundColor: chartColors.red,
+                fill: false,
+                xAxisID: "temp",
+                yAxisID: "A"
+              },
+              {
+                type: "line",
+                label: "Licht",
+                data: this.light,
+                borderColor: chartColors.blue,
+                backgroundColor: chartColors.blue,
+                yAxisID: "B",
+                xAxisID: "light",
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            title: {
+              display: true,
+              text: "Grafiek van sensor data over een periode van 3 weken"
+            },
+            tooltips: {
+              mode: "nearest",
+              intersect: true
+            },
+            legend: {
+              position: "top"
+            },
+            scales: {
+              yAxes: [
+                {
+                  id: "A",
+                  type: "linear",
+                  position: "left"
+                },
+                {
+                  id: "B",
+                  type: "linear",
+                  position: "right"
+                }
+              ],
+
+              xAxes: [
+                {
+                  id: "temp",
+                  type: "category",
+                  gridLines: {
+                    drawOnChartArea: false
+                  },
+                  ticks: {
+                    padding: 0,
+                    maxRotation: 0,
+                    autoSkip: false,
+                    callback: function(label) {
+                      return label;
+                    }
+                  },
+                  labels: this.tempDates
+                },
+                {
+                  id: "light",
+                  type: "category",
+                  gridLines: {
+                    drawOnChartArea: false
+                  },
+                  ticks: {
+                    padding: 0,
+                    maxRotation: 0,
+                    autoSkip: false,
+                    callback: function(label) {
+                      return label;
+                    }
+                  },
+                  labels: this.lightDates
+                }
+              ]
+            }
+          }
+        });
+
+        //Get average temperature
+        this.AverageTemp = this.calulateAverage(this.temp);
+        //console.log(this.AverageTemp);
+
+        //Get average light
+        this.AverageLight = this.calulateAverage(this.light);
+        //console.log(this.AverageLight);
+
+        var ctx = document.getElementById("barchart");
+        this.chart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Gegevens"],
+            datasets: [
+              {
+                label: "Gemiddelde Temperatuur",
+                backgroundColor: "#3e95cd",
+                data: [this.AverageTemp]
+              },
+              {
+                label: "Gemiddelde Lichtintensiteit",
+                backgroundColor: "#8e5ea2",
+                data: [this.AverageLight]
+              }
+            ]
+          }
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        this.overlay = false;
+      });
+  },
+
+  methods: {
+    calulateAverage(arr) {
+      var total = 0;
+      for (let i = 0; i &lt; arr.length; i++) {
+        total += arr[i];
+      }
+      //Rond getal af op 2 cijfers na de comma
+      return Math.floor((total / arr.length) * 100) / 100;
+    }
+  }
+};
+&lt;/script>
+
+&lt;style lang="scss">&lt;/style>
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Add.html">Add</a></li><li><a href="module-Dashboard.html">Dashboard</a></li><li><a href="module-Delete.html">Delete</a></li><li><a href="module-Edit.html">Edit</a></li><li><a href="module-Graphs.html">Graphs</a></li><li><a href="module-IndividualData.html">IndividualData</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Fri Dec 13 2019 23:30:06 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
