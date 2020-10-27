@@ -1,0 +1,49 @@
+/** @format */
+
+html {
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+a {
+  text-decoration: none;
+  font-size: 16px;
+  color: $navy-blue;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: none;
+    color: $navy-blue;
+  }
+}
+
+body {
+  background-color: $white;
+  color: $text-color;
+  overflow-x: hidden;
+}
+
+section {
+  padding: 50px 100px;
+}
+
+#intro {
+  background-color: #e0e0e0;
+  margin: 50px;
+}
+
+#work {
+  background-color: #e0e0e0;
+  margin: 50px;
+}
+
+footer {
+  background-color: #e0e0e0;
+  margin: 50px;
+}

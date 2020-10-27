@@ -1,0 +1,13 @@
+{
+  "sqltools.connections": [
+    {
+      "database": "PXL-IOT",
+      "dialect": "MySQL",
+      "name": "PXL-IOT-Local",
+      "password": "root",
+      "port": 8889,
+      "server": "localhost",
+      "username": "root"
+    }
+  ]
+}
