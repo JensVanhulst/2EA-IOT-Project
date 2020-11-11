@@ -70,7 +70,7 @@ npm run start
 
 ### Upload Arduino code
 
-Code is located in /app
+Code is located in /hardware
 
 # Server setup
 

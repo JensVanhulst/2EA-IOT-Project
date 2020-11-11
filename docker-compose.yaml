@@ -1,0 +1,67 @@
+version: "3.7"
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8081:80
+    volumes:
+      - ./build:/var/www/html/
+    links:
+      - api
+    depends_on:
+      - api
+    networks:
+      - appnet
+
+  api:
+    build:
+      context: ./src/api
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+      - appnet
+    links:
+      - mysql
+    depends_on:
+      - mysql
+    environment:
+      WAIT_HOSTS: mysql:3306
+
+  mysql:
+    image: mysql
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - appnet
+    environment:
+      MYSQL_ROOT_PASSWORD: d3mo-psw-123%
+
+  # phpMyAdmin container
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.0.2
+    networks:
+      - appnet
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+    depends_on:
+      - mysql
+
+  bot:
+    build:
+      context: ./src/script
+      dockerfile: Dockerfile
+    links:
+      - php
+    depends_on:
+      - php
+    networks:
+      - appnet
+
+# Define networks
+networks:
+  appnet:

@@ -1,14 +1,8 @@
-.DS_Store
-server/node_modules
-client/node_modules
-client/dist
-/protected
+.vercel
+firebase.js
 
-build/
-
-
-# Created by https://www.toptal.com/developers/gitignore/api/node,macos,windows,linux,vue
-# Edit at https://www.toptal.com/developers/gitignore?templates=node,macos,windows,linux,vue
+# Created by https://www.toptal.com/developers/gitignore/api/node,vuejs,macos,linux,windows,vscode
+# Edit at https://www.toptal.com/developers/gitignore?templates=node,vuejs,macos,linux,windows,vscode
 
 ### Linux ###
 *~
@@ -165,16 +159,20 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-### Vue ###
-# gitignore template for Vue.js projects
-#
+### vscode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+### Vuejs ###
 # Recommended template: Node.gitignore
 
-# TODO: where does this rule come from?
-docs/_book
-
-# TODO: where does this rule come from?
-test/
+dist/
+npm-debug.log
+yarn-error.log
 
 ### Windows ###
 # Windows thumbnail cache files
@@ -202,4 +200,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/node,macos,windows,linux,vue
+# End of https://www.toptal.com/developers/gitignore/api/node,vuejs,macos,linux,windows,vscode
