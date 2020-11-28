@@ -4,9 +4,6 @@ client/node_modules
 client/dist
 /protected
 
-build/
-
-
 # Created by https://www.toptal.com/developers/gitignore/api/node,macos,windows,linux,vue
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,macos,windows,linux,vue
 

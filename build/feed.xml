@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>RSS Feed Jens Vanhulst</title>
+    <link>https://www.jensvanhulst.tech</link>
+    <description>RSS Feed for latest statistics of the sensors</description>
+    <item><title>Daily summary of PXL-IOT</title><description>Laatst gemeten temperatuur = 13 °C&lt;br&gt;Laatst gemeten lichtintensiteit = 35 lx&lt;br&gt;Gemiddelde temperatuur = 17.3206106870229 °C&lt;br&gt;Gemiddelde lichtintensiteit = 98.1938775510204 lx&lt;br&gt;</description><author>11801318 / Jens Vanhulst</author><pubDate>Sat, 28 Nov 2020 10:50:01 CET</pubDate></item><item><title>Daily summary of PXL-IOT</title><description>Laatst gemeten temperatuur = 17 °C&lt;br&gt;Laatst gemeten lichtintensiteit = 99 lx&lt;br&gt;Gemiddelde temperatuur = 17.25414364640884 °C&lt;br&gt;Gemiddelde lichtintensiteit = 96.41481481481482 lx&lt;br&gt;</description><author>11801318 / Jens Vanhulst</author><pubDate>Sat, 28 Nov 2020 10:50:45 CET</pubDate></item></channel>
+</rss>
