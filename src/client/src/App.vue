@@ -65,11 +65,11 @@
             </v-btn>
           </template>
           <v-list>
-            <v-list-item link to="/docs/api">
+            <v-list-item link @click="goToDocs(`/docs/api`)">
               <v-list-item-title>API</v-list-item-title>
             </v-list-item>
 
-            <v-list-item link to="/docs/client">
+            <v-list-item link @click="goToDocs('/docs/client')">
               <v-list-item-title>client</v-list-item-title>
             </v-list-item>
           </v-list>
@@ -153,6 +153,9 @@ export default {
   },
 
   methods: {
+    goToDocs(url) {
+      window.location = `http://${window.document.domain}${url}`;
+    },
     /**
      * Logs the user out
      */
