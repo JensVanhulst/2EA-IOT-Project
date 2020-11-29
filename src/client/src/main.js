@@ -16,7 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 library.add(faPlus, faPencilAlt, faTrashAlt);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 Vue.config.productionTip = false;
-Vue.prototype.$API_URL = 'http://localhost:3000';
+Vue.prototype.$API_URL = `http://${document.domain}:3000`;
 
 let app;
 fb.auth().onAuthStateChanged((user) => {

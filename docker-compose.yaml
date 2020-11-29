@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8081:80
+      - 80:80
     volumes:
       - ./build:/var/www/html/
     links:
@@ -45,7 +45,7 @@ services:
     networks:
       - appnet
     ports:
-      - "8080:80"
+      - "81:80"
     environment:
       PMA_HOST: mysql
     depends_on:
